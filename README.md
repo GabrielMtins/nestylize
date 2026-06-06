@@ -24,11 +24,13 @@ $ make
 $ ./nestylize [FLAGS] <input> <output>
 ```
 
-The output file **will** be a PNG. The program accepts these following flags:
+The output file **will** be a PNG. The program accepts the following flags:
 
 - `--scale <factor>`: Scale factor (nearest neighbouring downsampling).
   Default: `4` (reduces both dimensions by a fourth). Example: `--scale 2`
   reduces both dimensions by a half.
+- `--bayer <factor>`: Apply bayer dithering and a factor for its intensity.
+  Example: `--bayer 2`.
 
 ## Examples:
 

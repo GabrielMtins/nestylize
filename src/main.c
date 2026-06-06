@@ -1,3 +1,20 @@
+/*
+	This file is part of nestylize.
+	
+	nestylize is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+	
+	nestylize is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	
+	You should have received a copy of the GNU General Public License
+	along with nestylize.  If not, see <https://www.gnu.org/licenses/>
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -22,16 +39,24 @@ typedef struct color {
 	uint8_t r, g, b, a;
 } color_t;
 
+enum DitherType {
+	DITHER_TYPE_NONE = 0,
+	DITHER_TYPE_BAYER,
+}; 
+
 #include "palette.h"
 
 unsigned char * resize_image(unsigned char *img, int w, int h, int channels, int new_w, int new_h);
 color_t find_closest_color_on_palette(color_t other);
 unsigned char * convert_to_palette(unsigned char *img, int w, int h, int channels);
+void apply_dithering_bayer(unsigned char *img, int w, int h, int channels, int bayer_level);
 
 int main(int argc, char **argv) {
 	int w, h, channels;
 	unsigned int scale = 4;
 	int new_w, new_h;
+	int dither_type = 0;
+	unsigned int bayer_level = 1;
 	uint8_t *img, *img_scaled, *img_quant;
 	const char *next_arg;
 	const char *input, *output;
@@ -50,8 +75,15 @@ int main(int argc, char **argv) {
 		if(argc == 2) {
 			PRINT_ERROR("Not enough arguments.\n");
 			exit(1);
-		}
-		else if(!strcmp(next_arg, "--scale")) {
+		} else if(!strcmp(next_arg, "--bayer")) {
+			dither_type = DITHER_TYPE_BAYER;
+
+			if(sscanf(*(argv++), "%u", &bayer_level) != 1) {
+				PRINT_ERROR("Failed to read bayer level.\n");
+				exit(1);
+			}
+
+		} else if(!strcmp(next_arg, "--scale")) {
 			if(sscanf(*(argv++), "%u", &scale) != 1) {
 				PRINT_ERROR("Failed to read scale.\n");
 				exit(1);
@@ -72,6 +104,13 @@ int main(int argc, char **argv) {
 	new_h = h / scale;
 
 	img_scaled = resize_image(img, w, h, channels, new_w, new_h);
+
+	switch(dither_type) {
+		case DITHER_TYPE_BAYER:
+			apply_dithering_bayer(img_scaled, new_w, new_h, channels, bayer_level);
+			break;
+	}
+
 	img_quant = convert_to_palette(img_scaled, new_w, new_h, channels);
 	stbi_write_png(output, new_w, new_h, channels, img_quant, new_w * channels);
 
@@ -135,4 +174,29 @@ unsigned char * convert_to_palette(unsigned char *img, int w, int h, int channel
 	}
 
 	return (unsigned char *) quantized;
+}
+
+void apply_dithering_bayer(unsigned char *img, int w, int h, int channels, int bayer_level) {
+	static const int bayer4x4[4][4] = {
+		{ 0, 8,  2, 10},
+		{12, 4, 14,  6},
+		{ 3, 11, 1,  9},
+		{15, 7, 13,  5}
+	};
+
+	for(int j = 0; j < h; j++) {
+		for(int i = 0; i < w; i++) {
+			int idx = (j * w + i) * channels;
+			int bayer_value = bayer4x4[j % 4][i % 4];
+
+			int offset = (bayer_value - 8) * bayer_level;
+
+			for(int c = 0; c < 3; c++) {
+				int old = img[idx + c];
+				int dithered = old + offset;
+				CLAMP(dithered, 0, 255);
+				img[idx + c] = dithered;
+			}
+		}
+	}
 }
