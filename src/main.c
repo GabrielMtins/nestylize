@@ -33,7 +33,7 @@ static const char *program_name = NULL;
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define CLAMP(i, a, b) (i = (MAX(MIN(i, b), a)))
-#define PRINT_ERROR(...) fprintf(stderr, "%s: " __VA_ARGS__, program_name)
+#define PRINT_ERROR(...) fprintf(stderr, "%s: ", program_name); fprintf(stderr, __VA_ARGS__)
 
 typedef struct color {
 	uint8_t r, g, b, a;
@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
 			PRINT_ERROR("Not enough arguments.\n");
 			exit(1);
 		} else if(!strcmp(next_arg, "--bayer")) {
-			argc++;
+			argc--;
 			dither_type = DITHER_TYPE_BAYER;
 
 			if(sscanf(*(argv++), "%u", &bayer_level) != 1) {
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 				exit(1);
 			}
 		} else if(!strcmp(next_arg, "--scale")) {
-			argc++;
+			argc--;
 
 			if(sscanf(*(argv++), "%u", &scale) != 1) {
 				PRINT_ERROR("Failed to read scale.\n");
@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
 				exit(1);
 			}
 		} else {
-			PRINT_ERROR("Unknown argument.\n");
+			PRINT_ERROR("Unknown argument: %s\n", next_arg);
 			exit(1);
 		}
 	}
@@ -106,6 +106,12 @@ int main(int argc, char **argv) {
 	output = *argv;
 
 	img = stbi_load(input, &w, &h, &channels, 4);
+
+	if(img == NULL) {
+		PRINT_ERROR("Failed to read input file: %s\n", input);
+		exit(1);
+	}
+
 	channels = 4;
 
 	new_w = w / scale;
@@ -132,7 +138,7 @@ int main(int argc, char **argv) {
 void usage(void) {
 	printf(
 			"%s: Not enough arguments.\n"
-			"Usage: %s --bayer-level <level> --scale <level> <input> <output>\n",
+			"Usage: %s --bayer <level> --scale <level> <input> <output>\n",
 			program_name, program_name
 			);
 }
