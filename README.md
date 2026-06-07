@@ -5,7 +5,7 @@ NES-style quantization filter. This program is distributed under **GNU GPL
 v3**.
 
 ![](examples/vertov_comparison.png)
-*A still from Dziga Vertov's film Man with a Movie Camera passed through the nestylize program.*
+*A still from Dziga Vertov's film Man with a Movie Camera passed through nestylize.*
 
 ## Building
 
@@ -24,7 +24,7 @@ $ make
 $ ./nestylize [FLAGS] <input> <output>
 ```
 
-The output file **will** be a PNG. The program accepts the following flags:
+The program outputs a PNG file. It accepts the following flags:
 
 - `--scale <factor>`: Scale factor (nearest neighbouring downsampling).
   Default: `4` (reduces both dimensions by a fourth). Example: `--scale 2`
