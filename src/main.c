@@ -46,6 +46,7 @@ enum DitherType {
 
 #include "palette.h"
 
+void usage(void);
 unsigned char * resize_image(unsigned char *img, int w, int h, int channels, int new_w, int new_h);
 color_t find_closest_color_on_palette(color_t other);
 unsigned char * convert_to_palette(unsigned char *img, int w, int h, int channels);
@@ -65,7 +66,7 @@ int main(int argc, char **argv) {
 	program_name = *(argv++);
 
 	if(argc < 2) {
-		PRINT_ERROR("Not enough arguments.\n");
+		usage();
 		exit(1);
 	}
 
@@ -76,16 +77,23 @@ int main(int argc, char **argv) {
 			PRINT_ERROR("Not enough arguments.\n");
 			exit(1);
 		} else if(!strcmp(next_arg, "--bayer")) {
+			argc++;
 			dither_type = DITHER_TYPE_BAYER;
 
 			if(sscanf(*(argv++), "%u", &bayer_level) != 1) {
 				PRINT_ERROR("Failed to read bayer level.\n");
 				exit(1);
 			}
-
 		} else if(!strcmp(next_arg, "--scale")) {
+			argc++;
+
 			if(sscanf(*(argv++), "%u", &scale) != 1) {
 				PRINT_ERROR("Failed to read scale.\n");
+				exit(1);
+			}
+
+			if(scale == 0) {
+				PRINT_ERROR("Scale can not be zero.\n");
 				exit(1);
 			}
 		} else {
@@ -119,6 +127,14 @@ int main(int argc, char **argv) {
 	free(img_quant);
 
 	return 0;
+}
+
+void usage(void) {
+	printf(
+			"%s: Not enough arguments.\n"
+			"Usage: %s --bayer-level <level> --scale <level> <input> <output>\n",
+			program_name, program_name
+			);
 }
 
 unsigned char * resize_image(unsigned char *img, int w, int h, int channels, int new_w, int new_h) {

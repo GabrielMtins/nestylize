@@ -1,4 +1,4 @@
-CC:=clang
+CC:=cc
 CC_FLAGS:=-std='c99' -Wall -Wextra -pedantic -O2
 INCLUDE_FLAGS:=-I./include -I./external/stb
 LIBRARY_FLAGS:=-lm
