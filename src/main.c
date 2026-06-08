@@ -148,14 +148,15 @@ void usage(void) {
 
 int read_unsigned(const char *str, unsigned int *value) {
 	unsigned int ret_value = 0;
-	size_t len = strlen(str);
 
-	for(size_t i = 0; i < len; i++) {
-		if(!isdigit(str[i])) {
+	while(*str != '\0') {
+		if(!isdigit(*str)) {
 			return -1;
 		}
 
-		ret_value = ret_value * 10 + (int) (str[i] - '0');
+		ret_value = 10 * ret_value + (int) (*str - '0');
+
+		str++;
 	}
 
 	*value = ret_value;
