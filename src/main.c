@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <math.h>
 
@@ -47,6 +48,7 @@ enum DitherType {
 #include "palette.h"
 
 void usage(void);
+int read_unsigned(const char *str, unsigned int *value);
 unsigned char * resize_image(unsigned char *img, int w, int h, int channels, int new_w, int new_h);
 color_t find_closest_color_on_palette(color_t other);
 unsigned char * convert_to_palette(unsigned char *img, int w, int h, int channels);
@@ -76,18 +78,19 @@ int main(int argc, char **argv) {
 		if(argc == 2) {
 			PRINT_ERROR("Not enough arguments.\n");
 			exit(1);
-		} else if(!strcmp(next_arg, "--bayer")) {
-			argc--;
+		}
+
+		argc--;
+
+		if(!strcmp(next_arg, "--bayer")) {
 			dither_type = DITHER_TYPE_BAYER;
 
-			if(sscanf(*(argv++), "%u", &bayer_level) != 1) {
+			if(read_unsigned(*(argv++), &bayer_level) < 0) {
 				PRINT_ERROR("Failed to read bayer level.\n");
 				exit(1);
 			}
 		} else if(!strcmp(next_arg, "--scale")) {
-			argc--;
-
-			if(sscanf(*(argv++), "%u", &scale) != 1) {
+			if(read_unsigned(*(argv++), &scale) < 0) {
 				PRINT_ERROR("Failed to read scale.\n");
 				exit(1);
 			}
@@ -141,6 +144,23 @@ void usage(void) {
 			"Usage: %s --bayer <level> --scale <level> <input> <output>\n",
 			program_name, program_name
 			);
+}
+
+int read_unsigned(const char *str, unsigned int *value) {
+	unsigned int ret_value = 0;
+	size_t len = strlen(str);
+
+	for(size_t i = 0; i < len; i++) {
+		if(!isdigit(str[i])) {
+			return -1;
+		}
+
+		ret_value = ret_value * 10 + (int) (str[i] - '0');
+	}
+
+	*value = ret_value;
+
+	return 0;
 }
 
 unsigned char * resize_image(unsigned char *img, int w, int h, int channels, int new_w, int new_h) {
